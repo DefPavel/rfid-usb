@@ -18,6 +18,7 @@
             <TextBox    
             FontSize="20"    
             MinWidth="200"
+            MaxWidth="200"    
             x:Name="textBox1"
             TextWrapping="Wrap" 
             AcceptsReturn="True" 
@@ -25,7 +26,7 @@
                 VerticalScrollBarVisibility="Disabled">
                 <i:Interaction.Behaviors>
                     <local:LineLimitingBehavior 
-                    TextBoxMaxAllowedLines="200" />
+                    TextBoxMaxAllowedLines="19" />
                 </i:Interaction.Behaviors>
             </TextBox>
             <Button 

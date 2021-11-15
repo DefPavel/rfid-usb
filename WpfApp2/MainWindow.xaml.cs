@@ -1,18 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Forms;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace WpfApp2
 {
@@ -22,8 +10,6 @@ namespace WpfApp2
     public partial class MainWindow : Window
     {
         readonly KeyHelper keyHelper = new KeyHelper();
-
-        string code = string.Empty;
 
         string decoded = string.Empty;
 
@@ -54,33 +40,26 @@ namespace WpfApp2
         // Для RFId карт через USB считыватель smartec
         private void KeysDows(object sender, System.Windows.Forms.KeyEventArgs e)
         {
-            textBox1.AppendText(e.KeyCode.ToString());
-            
             if (e.KeyCode >= Keys.NumPad0 && e.KeyCode <= Keys.NumPad9)
             {
+                // Преобразовывем массив в нормальный вид
                 textBox1.AppendText(char.ToString((char)(e.KeyCode - Keys.NumPad0 + '0')));
-                // Записываем в массив
-                code += char.ToString((char)(e.KeyCode - Keys.NumPad0 + '0'));
-
                 // 10 символов === 20 символам
-                for (int i = 0; i < code.Length; i += 2)
+                if(textBox1.Text.Length == 20)
                 {
-                    decoded += ReplaceCode(code.Substring(i, 2));
-                }
+                    for (int i = 6; i < textBox1.Text.Length; i += 2)
+                    {
+                        decoded += ReplaceCode(textBox1.Text.Substring(i, 2));
+                    }
+                    // Дальше делаем какую-то работу с <decoded>
+                    SizeText.Content = decoded;
+                } 
             }
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            string input = "48484850494853535048";
-            string s2 = "";
-            // Пропускаю первые три символа 
-            for (int i = 6; i < input.Length; i += 2)
-            {
-                s2 += ReplaceCode(input.Substring(i, 2));
-            }
-            //Output: 2105520
-            _ = System.Windows.MessageBox.Show(s2);
+            _ = System.Windows.MessageBox.Show(decoded);
         }
     }
 }
