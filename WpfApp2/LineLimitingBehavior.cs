@@ -11,7 +11,7 @@ namespace WpfApp2
         public int? TextBoxMaxAllowedLines { get; set; }
         protected override void OnAttached()
         {
-            if (TextBoxMaxAllowedLines != null && TextBoxMaxAllowedLines > 0)
+            if (TextBoxMaxAllowedLines > 0)
             {
                 AssociatedObject.TextChanged += OnTextBoxTextChanged;
             }
@@ -24,12 +24,12 @@ namespace WpfApp2
 
         private void OnTextBoxTextChanged(object sender, TextChangedEventArgs e)
         {
-            TextBox textBox = (TextBox)sender;
+            var textBox = (TextBox)sender;
 
-            int textLineCount = textBox.Text.Length;
+            var textLineCount = textBox.Text.Length;
 
             //Use Dispatcher to undo - http://stackoverflow.com/a/25453051/685341
-            if (textLineCount > TextBoxMaxAllowedLines.Value)
+            if (textLineCount > TextBoxMaxAllowedLines)
             {
                 // Очистить после
                 _ = Dispatcher.BeginInvoke(DispatcherPriority.Input, (Action)(() => textBox.Clear()));

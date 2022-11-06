@@ -7,19 +7,19 @@ namespace WpfApp2
 {
     internal class KeyHelper
     {
-        private const int WM_KEYDOWN = 0x100;
-        private const int WM_KEYUP = 0x101;
-        private const int WM_SYSKEYDOWN = 0x104;
-        private const int WM_SYSKEYUP = 0x105;
+        private const int WmKeydown = 0x100;
+        private const int WmKeyup = 0x101;
+        private const int WmSyskeydown = 0x104;
+        private const int WmSyskeyup = 0x105;
         [StructLayout(LayoutKind.Sequential)]
-        private struct KBDLLHOOKSTRUCT
+        private struct Kbdllhookstruct
         {
-            public Keys key;
-            public int vkCode;
-            public int scanCode;
-            public int flags;
-            public int time;
-            public IntPtr extra;
+            public readonly Keys key;
+            private readonly int vkCode;
+            private readonly int scanCode;
+            private readonly int flags;
+            private readonly int time;
+            private readonly IntPtr extra;
         }
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
@@ -29,12 +29,12 @@ namespace WpfApp2
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr GetModuleHandle(string name);
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        public static extern bool UnhookWindowsHookEx(IntPtr hook);
+        private static extern bool UnhookWindowsHookEx(IntPtr hook);
 
         private delegate IntPtr LowLevelKeyboardProc(int nCode, int wParam, IntPtr lParam);
-        private LowLevelKeyboardProc keyboardProcess;
+        private LowLevelKeyboardProc _keyboardProcess;
 
-        public static IntPtr ptrHook;
+        private static IntPtr _ptrHook;
 
         public event KeyEventHandler KeyUp;
         public event KeyEventHandler KeyDown;
@@ -48,37 +48,36 @@ namespace WpfApp2
             Unhook();
         }
 
-        public void Hook()
+        private void Hook()
         {
-            ProcessModule objCurrentModule = Process.GetCurrentProcess().MainModule;
-            keyboardProcess = new LowLevelKeyboardProc(CaptureKey);
-            ptrHook = SetWindowsHookEx(13, keyboardProcess, GetModuleHandle(objCurrentModule.ModuleName), 0);
+            var objCurrentModule = Process.GetCurrentProcess().MainModule;
+            _keyboardProcess = new LowLevelKeyboardProc(CaptureKey);
+            _ptrHook = SetWindowsHookEx(13, _keyboardProcess, GetModuleHandle(objCurrentModule.ModuleName), 0);
         }
-        public void Unhook()
+
+        private void Unhook()
         {
-            _ = UnhookWindowsHookEx(ptrHook);
+            _ = UnhookWindowsHookEx(_ptrHook);
         }
 
         private IntPtr CaptureKey(int nCode, int wp, IntPtr lp)
         {
-            if (nCode >= 0)
+            if (nCode < 0) return CallNextHookEx(_ptrHook, nCode, wp, lp);
+            var keyInfo = (Kbdllhookstruct)Marshal.PtrToStructure(lp, typeof(Kbdllhookstruct));
+            var eventArgs = new KeyEventArgs(keyInfo.key);
+            if ((wp == WmKeydown || wp == WmSyskeydown) && KeyDown != null)
             {
-                KBDLLHOOKSTRUCT keyInfo = (KBDLLHOOKSTRUCT)Marshal.PtrToStructure(lp, typeof(KBDLLHOOKSTRUCT));
-                KeyEventArgs eventArgs = new KeyEventArgs(keyInfo.key);
-                if ((wp == WM_KEYDOWN || wp == WM_SYSKEYDOWN) && KeyDown != null)
-                {
-                    KeyDown(this, eventArgs);
-                }
-                else if ((wp == WM_KEYUP || wp == WM_SYSKEYUP) && (KeyUp != null))
-                {
-                    KeyUp(this, eventArgs);
-                }
-                if (eventArgs.Handled)
-                {
-                    return (IntPtr)1;
-                }
+                KeyDown(this, eventArgs);
             }
-            return CallNextHookEx(ptrHook, nCode, wp, lp);
+            else if ((wp == WmKeyup || wp == WmSyskeyup) && (KeyUp != null))
+            {
+                KeyUp(this, eventArgs);
+            }
+            if (eventArgs.Handled)
+            {
+                return (IntPtr)1;
+            }
+            return CallNextHookEx(_ptrHook, nCode, wp, lp);
         }
     }
 }

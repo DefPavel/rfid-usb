@@ -9,20 +9,20 @@ namespace WpfApp2
     /// </summary>
     public partial class MainWindow : Window
     {
-        readonly KeyHelper keyHelper = new KeyHelper();
+        private readonly KeyHelper _keyHelper = new KeyHelper();
 
-        string decoded = string.Empty;
+        private string _decoded = string.Empty;
 
         public MainWindow()
         {
             InitializeComponent();
 
-            keyHelper.KeyDown += KeysDows;
+            _keyHelper.KeyDown += KeysDows;
 
         }
-        private string ReplaceCode(string code)
+        private static string ReplaceCode(string code)
         {
-            StringBuilder sb = new StringBuilder(code);
+            var sb = new StringBuilder(code);
             sb.Replace("48", "0");
             sb.Replace("49", "1");
             sb.Replace("50", "2");
@@ -38,28 +38,24 @@ namespace WpfApp2
         }
 
         // Для RFId карт через USB считыватель smartec
-        private void KeysDows(object sender, System.Windows.Forms.KeyEventArgs e)
+        private void KeysDows(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode >= Keys.NumPad0 && e.KeyCode <= Keys.NumPad9)
+            if (e.KeyCode < Keys.NumPad0 || e.KeyCode > Keys.NumPad9) return;
+            // Преобразовывем массив в нормальный вид
+            textBox1.AppendText(char.ToString((char)(e.KeyCode - Keys.NumPad0 + '0')));
+            // 10 символов === 20 символам
+            if (textBox1.Text.Length != 20) return;
+            for (var i = 6; i < textBox1.Text.Length; i += 2)
             {
-                // Преобразовывем массив в нормальный вид
-                textBox1.AppendText(char.ToString((char)(e.KeyCode - Keys.NumPad0 + '0')));
-                // 10 символов === 20 символам
-                if(textBox1.Text.Length == 20)
-                {
-                    for (int i = 6; i < textBox1.Text.Length; i += 2)
-                    {
-                        decoded += ReplaceCode(textBox1.Text.Substring(i, 2));
-                    }
-                    // Дальше делаем какую-то работу с <decoded>
-                    SizeText.Content = decoded;
-                } 
+                _decoded += ReplaceCode(textBox1.Text.Substring(i, 2));
             }
+            // Дальше делаем какую-то работу с <decoded>
+            SizeText.Content = _decoded;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            _ = System.Windows.MessageBox.Show(decoded);
+            _ = System.Windows.MessageBox.Show(_decoded);
         }
     }
 }
